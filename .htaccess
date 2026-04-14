@@ -1,0 +1,6 @@
+# Redirecionar raiz para a pasta public
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} ^/?$
+    RewriteRule ^ /public/login.php [L,R=302]
+</IfModule>
