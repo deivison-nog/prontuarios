@@ -27,7 +27,7 @@
   }
 
   // ---- Auto-dismiss alerts after 6 s ----
-  document.querySelectorAll('.alert.alert-success, .alert.alert-info').forEach(function (el) {
+  document.querySelectorAll('.alert.alert-success, .alert.alert-info, .alert.alert-warning').forEach(function (el) {
     setTimeout(function () {
       const bsAlert = bootstrap.Alert.getOrCreateInstance(el);
       bsAlert.close();

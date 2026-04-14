@@ -73,3 +73,15 @@ function sanitizarPost(array $campos): array
     }
     return $saida;
 }
+
+/**
+ * Renderiza um campo de visualização somente-leitura.
+ */
+function campoVisualizacao(string $label, mixed $valor): void
+{
+    $v = is_bool($valor) ? ($valor ? 'Sim' : 'Não') : (string)($valor ?? '');
+    echo '<div class="view-field">';
+    echo '<div class="view-label">' . h($label) . '</div>';
+    echo '<div class="view-value">' . (trim($v) !== '' ? h($v) : '<span class="text-muted">—</span>') . '</div>';
+    echo '</div>';
+}

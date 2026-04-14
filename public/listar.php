@@ -120,7 +120,9 @@ include 'partials/header.php';
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                         title="Excluir"
-                                        onclick="confirmarExclusao(<?= $p['id'] ?>, '<?= h(addslashes($p['nome'])) ?>')">
+                                        data-id="<?= $p['id'] ?>"
+                                        data-nome="<?= h($p['nome']) ?>"
+                                        onclick="confirmarExclusao(this.dataset.id, this.dataset.nome)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>

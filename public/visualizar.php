@@ -69,31 +69,23 @@ include 'partials/header.php';
     </div>
     <div class="form-section-body">
         <div class="row g-3">
-            <?php
-            function campo(string $label, mixed $valor): void {
-                $v = is_bool($valor) ? ($valor ? 'Sim' : 'Não') : (string)($valor ?? '');
-                echo '<div class="view-field">';
-                echo '<div class="view-label">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</div>';
-                echo '<div class="view-value">' . (trim($v) !== '' ? htmlspecialchars($v, ENT_QUOTES, 'UTF-8') : '<span class="text-muted">—</span>') . '</div>';
-                echo '</div>';
-            }
-            ?>
-            <div class="col-md-4"><?php campo('Número do Prontuário', $prontuario['numero_prontuario']); ?></div>
-            <div class="col-md-8"><?php campo('Nome Completo', $prontuario['nome']); ?></div>
-            <div class="col-md-3"><?php campo('Data de Nascimento', $prontuario['data_nascimento'] ? formatarData($prontuario['data_nascimento']) : ''); ?></div>
-            <div class="col-md-3"><?php campo('Sexo', $prontuario['sexo']); ?></div>
-            <div class="col-md-3"><?php campo('Estado Civil', $prontuario['estado_civil']); ?></div>
-            <div class="col-md-3"><?php campo('Profissão', $prontuario['profissao']); ?></div>
-            <div class="col-md-6"><?php campo('Nome do Pai', $prontuario['nome_pai']); ?></div>
-            <div class="col-md-6"><?php campo('Nome da Mãe', $prontuario['nome_mae']); ?></div>
-            <div class="col-md-4"><?php campo('Município', $prontuario['municipio']); ?></div>
-            <div class="col-md-8"><?php campo('Endereço', $prontuario['endereco']); ?></div>
-            <div class="col-md-6"><?php campo('Cliente / Responsável', $prontuario['cliente']); ?></div>
-            <div class="col-md-6"><?php campo('Beneficiário', $prontuario['beneficiario']); ?></div>
+            <?php /* Patient data fields */ ?>
+            <div class="col-md-4"><?php campoVisualizacao('Número do Prontuário', $prontuario['numero_prontuario']); ?></div>
+            <div class="col-md-8"><?php campoVisualizacao('Nome Completo', $prontuario['nome']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Data de Nascimento', $prontuario['data_nascimento'] ? formatarData($prontuario['data_nascimento']) : ''); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Sexo', $prontuario['sexo']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Estado Civil', $prontuario['estado_civil']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Profissão', $prontuario['profissao']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Nome do Pai', $prontuario['nome_pai']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Nome da Mãe', $prontuario['nome_mae']); ?></div>
+            <div class="col-md-4"><?php campoVisualizacao('Município', $prontuario['municipio']); ?></div>
+            <div class="col-md-8"><?php campoVisualizacao('Endereço', $prontuario['endereco']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Cliente / Responsável', $prontuario['cliente']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Beneficiário', $prontuario['beneficiario']); ?></div>
             <?php if ($prontuario['obito']): ?>
-                <div class="col-md-3"><?php campo('Falecido', 'Sim'); ?></div>
-                <div class="col-md-3"><?php campo('Data do Óbito', $prontuario['data_obito'] ? formatarData($prontuario['data_obito']) : ''); ?></div>
-                <div class="col-md-6"><?php campo('Causa do Óbito', $prontuario['causa_obito']); ?></div>
+                <div class="col-md-3"><?php campoVisualizacao('Falecido', 'Sim'); ?></div>
+                <div class="col-md-3"><?php campoVisualizacao('Data do Óbito', $prontuario['data_obito'] ? formatarData($prontuario['data_obito']) : ''); ?></div>
+                <div class="col-md-6"><?php campoVisualizacao('Causa do Óbito', $prontuario['causa_obito']); ?></div>
             <?php endif; ?>
         </div>
     </div>
@@ -106,17 +98,17 @@ include 'partials/header.php';
     </div>
     <div class="form-section-body">
         <div class="row g-3">
-            <div class="col-md-3"><?php campo('Data do Atendimento', $prontuario['data_atendimento'] ? formatarData($prontuario['data_atendimento']) : ''); ?></div>
-            <div class="col-md-3"><?php campo('Idade', $prontuario['idade']); ?></div>
-            <div class="col-md-3"><?php campo('Programa', $prontuario['programa']); ?></div>
-            <div class="col-md-3"><?php campo('Grupo Alvo', $prontuario['grupo_alvo']); ?></div>
-            <div class="col-md-4"><?php campo('Atividade', $prontuario['atividade']); ?></div>
-            <div class="col-md-4"><?php campo('Serviço', $prontuario['servico']); ?></div>
-            <div class="col-md-12"><?php campo('Diagnóstico', $prontuario['diagnostico']); ?></div>
-            <div class="col-md-6"><?php campo('Prescrição', $prontuario['prescricao']); ?></div>
-            <div class="col-md-6"><?php campo('Tratamento', $prontuario['tratamento']); ?></div>
-            <div class="col-md-12"><?php campo('Evolução', $prontuario['evolucao']); ?></div>
-            <div class="col-md-12"><?php campo('Observações', $prontuario['observacoes']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Data do Atendimento', $prontuario['data_atendimento'] ? formatarData($prontuario['data_atendimento']) : ''); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Idade', $prontuario['idade']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Programa', $prontuario['programa']); ?></div>
+            <div class="col-md-3"><?php campoVisualizacao('Grupo Alvo', $prontuario['grupo_alvo']); ?></div>
+            <div class="col-md-4"><?php campoVisualizacao('Atividade', $prontuario['atividade']); ?></div>
+            <div class="col-md-4"><?php campoVisualizacao('Serviço', $prontuario['servico']); ?></div>
+            <div class="col-md-12"><?php campoVisualizacao('Diagnóstico', $prontuario['diagnostico']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Prescrição', $prontuario['prescricao']); ?></div>
+            <div class="col-md-6"><?php campoVisualizacao('Tratamento', $prontuario['tratamento']); ?></div>
+            <div class="col-md-12"><?php campoVisualizacao('Evolução', $prontuario['evolucao']); ?></div>
+            <div class="col-md-12"><?php campoVisualizacao('Observações', $prontuario['observacoes']); ?></div>
         </div>
     </div>
 </div>
