@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS prontuarios (
     usuario_id          INT UNSIGNED NOT NULL,
 
     -- Identificação
-    numero_prontuario   VARCHAR(50)  DEFAULT NULL,
+    numero_prontuario   VARCHAR(50)  DEFAULT NULL UNIQUE,
     nome                VARCHAR(255) NOT NULL,
     data_nascimento     DATE         DEFAULT NULL,
     sexo                ENUM('Masculino','Feminino','Outro') DEFAULT NULL,
