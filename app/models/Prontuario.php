@@ -64,6 +64,26 @@ class Prontuario
         return (int)$this->pdo->lastInsertId();
     }
 
+    /**
+     * Insere apenas os dados do paciente/prontuário, sem campos de atendimento.
+     * Os atendimentos são armazenados separadamente na tabela `atendimentos`.
+     */
+    public function inserirProntuario(array $dados): int
+    {
+        $sql = 'INSERT INTO prontuarios (
+                    usuario_id, numero_prontuario, nome, data_nascimento, sexo,
+                    estado_civil, profissao, nome_pai, nome_mae, municipio, endereco,
+                    cliente, beneficiario, obito, data_obito, causa_obito, status
+                ) VALUES (
+                    :usuario_id, :numero_prontuario, :nome, :data_nascimento, :sexo,
+                    :estado_civil, :profissao, :nome_pai, :nome_mae, :municipio, :endereco,
+                    :cliente, :beneficiario, :obito, :data_obito, :causa_obito, :status
+                )';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($this->prepararDadosProntuario($dados));
+        return (int)$this->pdo->lastInsertId();
+    }
+
     public function atualizar(int $id, array $dados): bool
     {
         $sql = 'UPDATE prontuarios SET
@@ -161,6 +181,29 @@ class Prontuario
             ':tratamento'        => $d['tratamento']         ?: null,
             ':evolucao'          => $d['evolucao']           ?: null,
             ':observacoes'       => $d['observacoes']        ?: null,
+            ':status'            => $d['status']             ?? 'digitado',
+        ];
+    }
+
+    private function prepararDadosProntuario(array $d): array
+    {
+        return [
+            ':usuario_id'        => $d['usuario_id']        ?? null,
+            ':numero_prontuario' => $d['numero_prontuario']  ?: null,
+            ':nome'              => $d['nome'],
+            ':data_nascimento'   => $d['data_nascimento']    ?: null,
+            ':sexo'              => $d['sexo']               ?: null,
+            ':estado_civil'      => $d['estado_civil']       ?: null,
+            ':profissao'         => $d['profissao']          ?: null,
+            ':nome_pai'          => $d['nome_pai']           ?: null,
+            ':nome_mae'          => $d['nome_mae']           ?: null,
+            ':municipio'         => $d['municipio']          ?: null,
+            ':endereco'          => $d['endereco']           ?: null,
+            ':cliente'           => $d['cliente']            ?: null,
+            ':beneficiario'      => $d['beneficiario']       ?: null,
+            ':obito'             => isset($d['obito']) && $d['obito'] ? 1 : 0,
+            ':data_obito'        => $d['data_obito']         ?: null,
+            ':causa_obito'       => $d['causa_obito']        ?: null,
             ':status'            => $d['status']             ?? 'digitado',
         ];
     }

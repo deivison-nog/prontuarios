@@ -65,6 +65,31 @@ CREATE TABLE IF NOT EXISTS prontuarios (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------
+-- Tabela de atendimentos (1 prontuário → N atendimentos)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS atendimentos (
+    id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    prontuario_id       INT UNSIGNED NOT NULL,
+    data_atendimento    DATE         DEFAULT NULL,
+    programa            VARCHAR(100) DEFAULT NULL,
+    grupo_alvo          VARCHAR(100) DEFAULT NULL,
+    atividade           VARCHAR(100) DEFAULT NULL,
+    servico             VARCHAR(100) DEFAULT NULL,
+    idade               VARCHAR(20)  DEFAULT NULL,
+    diagnostico         TEXT         DEFAULT NULL,
+    prescricao          TEXT         DEFAULT NULL,
+    tratamento          TEXT         DEFAULT NULL,
+    evolucao            TEXT         DEFAULT NULL,
+    observacoes         TEXT         DEFAULT NULL,
+    created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP    NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_atendimentos_prontuario
+        FOREIGN KEY (prontuario_id) REFERENCES prontuarios(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------------
 -- Usuário administrador padrão
 -- Senha: admin123  (troque imediatamente em produção)
 -- ------------------------------------------------------------
