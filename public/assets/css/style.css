@@ -397,3 +397,47 @@ body {
     width: 100%;
   }
 }
+
+/* ============================================================
+   PRINT — show only prontuário content
+   ============================================================ */
+@media print {
+  /* Hide app chrome */
+  #sidebar,
+  .topbar {
+    display: none !important;
+  }
+
+  /* Hide everything in the content area that is not the prontuário record */
+  .content-area > *:not(#prontuario-content) {
+    display: none !important;
+  }
+
+  /* Remove wrapper flex layout */
+  #wrapper,
+  #page-content {
+    display: block !important;
+    width:   100% !important;
+  }
+
+  .content-area {
+    padding: 0 !important;
+  }
+
+  /* Ensure prontuário content fills the page */
+  #prontuario-content {
+    display: block !important;
+  }
+
+  /* Clean up card/section shadows for print */
+  .form-section,
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

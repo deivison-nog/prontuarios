@@ -38,6 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $erros[] = "O campo <strong>{$nomeCampo}</strong> contém uma data inválida.";
         }
     }
+    if (!empty($dados['numero_prontuario']) && $model->numeroProntuarioExiste($dados['numero_prontuario'])) {
+        $erros[] = 'O <strong>Número do Prontuário</strong> <em>' . h($dados['numero_prontuario']) . '</em> já está em uso. Informe um número diferente.';
+    }
 
     if (empty($erros)) {
         $dados['usuario_id'] = $user['id'];
@@ -90,6 +93,9 @@ include 'partials/header.php';
                 <label class="form-label" for="numero_prontuario">Número do Prontuário</label>
                 <input type="text" class="form-control" id="numero_prontuario" name="numero_prontuario"
                     value="<?= h($dados['numero_prontuario'] ?? '') ?>" placeholder="Ex.: 001234">
+                <div class="invalid-feedback" id="numero_prontuario_feedback">
+                    Este número de prontuário já está em uso.
+                </div>
             </div>
 
             <div class="col-md-8">
@@ -313,6 +319,40 @@ document.getElementById('obito').addEventListener('change', function () {
     document.getElementById('bloco_obito').style.display = show ? 'block' : 'none';
     document.getElementById('bloco_causa').style.display = show ? 'block' : 'none';
 });
+
+// Verificação em tempo real do número do prontuário
+(function () {
+    const input    = document.getElementById('numero_prontuario');
+    const feedback = document.getElementById('numero_prontuario_feedback');
+    if (!input) return;
+
+    input.addEventListener('blur', function () {
+        const numero = this.value.trim();
+        if (numero === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            return;
+        }
+
+        fetch('api/verificar-numero.php?numero=' + encodeURIComponent(numero))
+            .then(r => r.json())
+            .then(data => {
+                if (data.existe) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                    if (feedback) feedback.textContent = 'O número "' + numero + '" já está em uso. Informe um número diferente.';
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            })
+            .catch(() => { /* falha silenciosa; validação server-side garante a integridade */ });
+    });
+
+    // Limpa o estado ao digitar novamente
+    input.addEventListener('input', function () {
+        this.classList.remove('is-invalid', 'is-valid');
+    });
+}());
 </script>
 
 <?php include 'partials/footer.php'; ?>

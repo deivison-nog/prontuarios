@@ -108,6 +108,26 @@ class Prontuario
         return $stmt->execute([$id]);
     }
 
+    /**
+     * Verifica se já existe um prontuário com o número informado.
+     * Passa $excludeId > 0 para ignorar o próprio registro ao editar.
+     */
+    public function numeroProntuarioExiste(string $numero, int $excludeId = 0): bool
+    {
+        if ($numero === '') {
+            return false;
+        }
+        $sql  = 'SELECT COUNT(*) FROM prontuarios WHERE numero_prontuario = ?';
+        $params = [$numero];
+        if ($excludeId > 0) {
+            $sql    .= ' AND id <> ?';
+            $params[] = $excludeId;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function estatisticas(): array
     {
         $total      = (int)$this->pdo->query('SELECT COUNT(*) FROM prontuarios')->fetchColumn();

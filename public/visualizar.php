@@ -34,6 +34,9 @@ include 'partials/header.php';
         Prontuário <?= h($prontuario['numero_prontuario'] ? '#' . $prontuario['numero_prontuario'] : '#' . $prontuario['id']) ?>
     </h2>
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" onclick="imprimirProntuario()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
         <a href="editar.php?id=<?= $id ?>" class="btn btn-warning">
             <i class="bi bi-pencil me-1"></i>Editar
         </a>
@@ -42,6 +45,8 @@ include 'partials/header.php';
         </a>
     </div>
 </div>
+
+<div id="prontuario-content">
 
 <!-- Badge status -->
 <div class="mb-4">
@@ -112,5 +117,13 @@ include 'partials/header.php';
         </div>
     </div>
 </div>
+
+</div><!-- #prontuario-content -->
+
+<script>
+function imprimirProntuario() {
+    window.print();
+}
+</script>
 
 <?php include 'partials/footer.php'; ?>
