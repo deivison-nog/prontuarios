@@ -34,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($dados['nome'])) {
         $erros[] = 'O campo <strong>Nome do Paciente</strong> é obrigatório.';
     }
+    if (!empty($dados['numero_prontuario']) && $model->numeroProntuarioExiste($dados['numero_prontuario'], $id)) {
+        $erros[] = 'Esse número de prontuário já existe. Por favor, utilize um número diferente.';
+    }
     foreach ($camposData as $campo) {
         if (!empty($dados[$campo]) && !validarData($dados[$campo])) {
             $nomeCampo = match($campo) {
