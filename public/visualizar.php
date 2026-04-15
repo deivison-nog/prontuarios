@@ -3,6 +3,7 @@ require_once __DIR__ . '/../app/auth.php';
 require_once __DIR__ . '/../app/helpers.php';
 require_once __DIR__ . '/../app/db.php';
 require_once __DIR__ . '/../app/models/Prontuario.php';
+require_once __DIR__ . '/../app/models/Atendimento.php';
 
 requireLogin('login.php');
 
@@ -15,6 +16,17 @@ $prontuario = $model->buscarPorId($id);
 if (!$prontuario) {
     redirecionarComMensagem('listar.php', 'erro', 'Prontuário não encontrado.');
 }
+
+// Busca atendimentos da tabela dedicada
+$modelAtendimento = new Atendimento($pdo);
+$atendimentos     = $modelAtendimento->listarPorProntuario($id);
+
+// Fallback: prontuários antigos têm dados de atendimento nos campos legados
+$temAtendimentoLegado = empty($atendimentos) && (
+    !empty($prontuario['data_atendimento']) ||
+    !empty($prontuario['diagnostico'])      ||
+    !empty($prontuario['evolucao'])
+);
 
 $pageTitle  = 'Visualizar Prontuário';
 $activeMenu = 'listar';
@@ -69,7 +81,6 @@ include 'partials/header.php';
     </div>
     <div class="form-section-body">
         <div class="row g-3">
-            <?php /* Patient data fields */ ?>
             <div class="col-md-4"><?php campoVisualizacao('Número do Prontuário', $prontuario['numero_prontuario']); ?></div>
             <div class="col-md-8"><?php campoVisualizacao('Nome Completo', $prontuario['nome']); ?></div>
             <div class="col-md-3"><?php campoVisualizacao('Data de Nascimento', $prontuario['data_nascimento'] ? formatarData($prontuario['data_nascimento']) : ''); ?></div>
@@ -91,26 +102,68 @@ include 'partials/header.php';
     </div>
 </div>
 
-<!-- SEÇÃO: ATENDIMENTO -->
-<div class="form-section mb-4">
-    <div class="form-section-header">
-        <i class="bi bi-heart-pulse-fill"></i> Atendimento / Evolução
-    </div>
-    <div class="form-section-body">
-        <div class="row g-3">
-            <div class="col-md-3"><?php campoVisualizacao('Data do Atendimento', $prontuario['data_atendimento'] ? formatarData($prontuario['data_atendimento']) : ''); ?></div>
-            <div class="col-md-3"><?php campoVisualizacao('Idade', $prontuario['idade']); ?></div>
-            <div class="col-md-3"><?php campoVisualizacao('Programa', $prontuario['programa']); ?></div>
-            <div class="col-md-3"><?php campoVisualizacao('Grupo Alvo', $prontuario['grupo_alvo']); ?></div>
-            <div class="col-md-4"><?php campoVisualizacao('Atividade', $prontuario['atividade']); ?></div>
-            <div class="col-md-4"><?php campoVisualizacao('Serviço', $prontuario['servico']); ?></div>
-            <div class="col-md-12"><?php campoVisualizacao('Diagnóstico', $prontuario['diagnostico']); ?></div>
-            <div class="col-md-6"><?php campoVisualizacao('Prescrição', $prontuario['prescricao']); ?></div>
-            <div class="col-md-6"><?php campoVisualizacao('Tratamento', $prontuario['tratamento']); ?></div>
-            <div class="col-md-12"><?php campoVisualizacao('Evolução', $prontuario['evolucao']); ?></div>
-            <div class="col-md-12"><?php campoVisualizacao('Observações', $prontuario['observacoes']); ?></div>
+<!-- SEÇÃO: ATENDIMENTOS -->
+<?php if (!empty($atendimentos)): ?>
+    <?php foreach ($atendimentos as $numAt => $at): ?>
+        <div class="form-section mb-4">
+            <div class="form-section-header">
+                <i class="bi bi-heart-pulse-fill"></i>
+                Atendimento #<?= $numAt + 1 ?>
+                <?php if (!empty($at['data_atendimento'])): ?>
+                    <span class="ms-2 text-muted fw-normal small">— <?= formatarData($at['data_atendimento']) ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="form-section-body">
+                <div class="row g-3">
+                    <div class="col-md-3"><?php campoVisualizacao('Data do Atendimento', $at['data_atendimento'] ? formatarData($at['data_atendimento']) : ''); ?></div>
+                    <div class="col-md-3"><?php campoVisualizacao('Idade', $at['idade']); ?></div>
+                    <div class="col-md-3"><?php campoVisualizacao('Programa', $at['programa']); ?></div>
+                    <div class="col-md-3"><?php campoVisualizacao('Grupo Alvo', $at['grupo_alvo']); ?></div>
+                    <div class="col-md-4"><?php campoVisualizacao('Atividade', $at['atividade']); ?></div>
+                    <div class="col-md-4"><?php campoVisualizacao('Serviço', $at['servico']); ?></div>
+                    <div class="col-md-12"><?php campoVisualizacao('Diagnóstico', $at['diagnostico']); ?></div>
+                    <div class="col-md-6"><?php campoVisualizacao('Prescrição', $at['prescricao']); ?></div>
+                    <div class="col-md-6"><?php campoVisualizacao('Tratamento', $at['tratamento']); ?></div>
+                    <div class="col-md-12"><?php campoVisualizacao('Evolução', $at['evolucao']); ?></div>
+                    <div class="col-md-12"><?php campoVisualizacao('Observações', $at['observacoes']); ?></div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+
+<?php elseif ($temAtendimentoLegado): ?>
+    <!-- Atendimento legado (campo na tabela prontuarios) -->
+    <div class="form-section mb-4">
+        <div class="form-section-header">
+            <i class="bi bi-heart-pulse-fill"></i> Atendimento / Evolução
+        </div>
+        <div class="form-section-body">
+            <div class="row g-3">
+                <div class="col-md-3"><?php campoVisualizacao('Data do Atendimento', $prontuario['data_atendimento'] ? formatarData($prontuario['data_atendimento']) : ''); ?></div>
+                <div class="col-md-3"><?php campoVisualizacao('Idade', $prontuario['idade']); ?></div>
+                <div class="col-md-3"><?php campoVisualizacao('Programa', $prontuario['programa']); ?></div>
+                <div class="col-md-3"><?php campoVisualizacao('Grupo Alvo', $prontuario['grupo_alvo']); ?></div>
+                <div class="col-md-4"><?php campoVisualizacao('Atividade', $prontuario['atividade']); ?></div>
+                <div class="col-md-4"><?php campoVisualizacao('Serviço', $prontuario['servico']); ?></div>
+                <div class="col-md-12"><?php campoVisualizacao('Diagnóstico', $prontuario['diagnostico']); ?></div>
+                <div class="col-md-6"><?php campoVisualizacao('Prescrição', $prontuario['prescricao']); ?></div>
+                <div class="col-md-6"><?php campoVisualizacao('Tratamento', $prontuario['tratamento']); ?></div>
+                <div class="col-md-12"><?php campoVisualizacao('Evolução', $prontuario['evolucao']); ?></div>
+                <div class="col-md-12"><?php campoVisualizacao('Observações', $prontuario['observacoes']); ?></div>
+            </div>
         </div>
     </div>
-</div>
+
+<?php else: ?>
+    <div class="form-section mb-4">
+        <div class="form-section-header">
+            <i class="bi bi-heart-pulse-fill"></i> Atendimentos / Evoluções
+        </div>
+        <div class="form-section-body">
+            <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Nenhum atendimento registrado.</p>
+        </div>
+    </div>
+<?php endif; ?>
 
 <?php include 'partials/footer.php'; ?>
+

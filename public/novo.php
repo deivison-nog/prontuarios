@@ -3,51 +3,95 @@ require_once __DIR__ . '/../app/auth.php';
 require_once __DIR__ . '/../app/helpers.php';
 require_once __DIR__ . '/../app/db.php';
 require_once __DIR__ . '/../app/models/Prontuario.php';
+require_once __DIR__ . '/../app/models/Atendimento.php';
 
 requireLogin('login.php');
 
-$user   = usuarioAtual();
-$model  = new Prontuario($pdo);
+$user            = usuarioAtual();
+$model           = new Prontuario($pdo);
+$modelAtendimento = new Atendimento($pdo);
 $erros  = [];
 $dados  = [];
 
-$camposTexto = [
+$camposProntuario = [
     'numero_prontuario','nome','sexo','estado_civil','profissao',
     'nome_pai','nome_mae','municipio','endereco','cliente','beneficiario',
-    'causa_obito','programa','grupo_alvo','atividade','servico','idade',
-    'diagnostico','prescricao','tratamento','evolucao','observacoes','status',
+    'causa_obito','status',
 ];
-$camposData = ['data_nascimento','data_obito','data_atendimento'];
+$camposDataProntuario = ['data_nascimento','data_obito'];
+$camposAtendimento    = [
+    'data_atendimento','programa','grupo_alvo','atividade','servico',
+    'idade','diagnostico','prescricao','tratamento','evolucao','observacoes',
+];
+
+// Atendimentos para repopular o formulário em caso de erro
+$atendimentos = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dados = sanitizarPost(array_merge($camposTexto, $camposData));
+    // --- Sanitizar dados do prontuário ---
+    $dados = sanitizarPost(array_merge($camposProntuario, $camposDataProntuario));
     $dados['obito'] = isset($_POST['obito']) ? 1 : 0;
 
-    // Validação
+    // --- Sanitizar lista de atendimentos ---
+    $atendimentosPost = $_POST['atendimentos'] ?? [];
+    if (!is_array($atendimentosPost)) {
+        $atendimentosPost = [];
+    }
+    foreach ($atendimentosPost as $at) {
+        $bloco = [];
+        foreach ($camposAtendimento as $campo) {
+            $bloco[$campo] = trim($at[$campo] ?? '');
+        }
+        $atendimentos[] = $bloco;
+    }
+    // Garantir pelo menos um bloco de atendimento
+    if (empty($atendimentos)) {
+        $atendimentos[] = array_fill_keys($camposAtendimento, '');
+    }
+
+    // --- Validação ---
     if (empty($dados['nome'])) {
         $erros[] = 'O campo <strong>Nome do Paciente</strong> é obrigatório.';
     }
-    foreach ($camposData as $campo) {
+    foreach ($camposDataProntuario as $campo) {
         if (!empty($dados[$campo]) && !validarData($dados[$campo])) {
             $nomeCampo = match($campo) {
-                'data_nascimento'  => 'Data de Nascimento',
-                'data_obito'       => 'Data do Óbito',
-                'data_atendimento' => 'Data de Atendimento',
-                default            => $campo,
+                'data_nascimento' => 'Data de Nascimento',
+                'data_obito'      => 'Data do Óbito',
+                default           => $campo,
             };
             $erros[] = "O campo <strong>{$nomeCampo}</strong> contém uma data inválida.";
+        }
+    }
+    foreach ($atendimentos as $idx => $at) {
+        $num = $idx + 1;
+        if (!empty($at['data_atendimento']) && !validarData($at['data_atendimento'])) {
+            $erros[] = "O campo <strong>Data de Atendimento</strong> do atendimento #{$num} contém uma data inválida.";
         }
     }
 
     if (empty($erros)) {
         $dados['usuario_id'] = $user['id'];
-        $id = $model->inserir($dados);
+        $id = $model->inserirProntuario($dados);
+
+        foreach ($atendimentos as $at) {
+            // Salva o bloco apenas se tiver pelo menos um campo preenchido
+            if (!empty(array_filter($at, fn($v) => $v !== ''))) {
+                $modelAtendimento->inserir($id, $at);
+            }
+        }
+
         redirecionarComMensagem(
             "visualizar.php?id={$id}",
             'sucesso',
             'Prontuário digitado com sucesso!'
         );
     }
+}
+
+// Inicializar com um bloco vazio se não há atendimentos
+if (empty($atendimentos)) {
+    $atendimentos[] = array_fill_keys($camposAtendimento, '');
 }
 
 $pageTitle  = 'Novo Prontuário';
@@ -196,79 +240,20 @@ include 'partials/header.php';
 </div>
 
 <!-- ============================================================ -->
-<!-- SEÇÃO 2: ATENDIMENTO / EVOLUÇÃO                              -->
+<!-- SEÇÃO 2: ATENDIMENTOS                                        -->
 <!-- ============================================================ -->
 <div class="form-section mb-4">
-    <div class="form-section-header">
-        <i class="bi bi-heart-pulse-fill"></i> Atendimento / Evolução
+    <div class="form-section-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-heart-pulse-fill"></i> Atendimentos / Evoluções</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-adicionar-atendimento">
+            <i class="bi bi-plus-circle me-1"></i>Adicionar Atendimento
+        </button>
     </div>
     <div class="form-section-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label" for="data_atendimento">Data do Atendimento</label>
-                <input type="date" class="form-control" id="data_atendimento" name="data_atendimento"
-                    value="<?= h($dados['data_atendimento'] ?? '') ?>">
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label" for="idade">Idade na Época</label>
-                <input type="text" class="form-control" id="idade" name="idade"
-                    value="<?= h($dados['idade'] ?? '') ?>" placeholder="Ex.: 45 anos">
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label" for="programa">Programa</label>
-                <input type="text" class="form-control" id="programa" name="programa"
-                    value="<?= h($dados['programa'] ?? '') ?>" placeholder="Ex.: ESF">
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label" for="grupo_alvo">Grupo Alvo</label>
-                <input type="text" class="form-control" id="grupo_alvo" name="grupo_alvo"
-                    value="<?= h($dados['grupo_alvo'] ?? '') ?>" placeholder="Ex.: Idoso">
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label" for="atividade">Atividade</label>
-                <input type="text" class="form-control" id="atividade" name="atividade"
-                    value="<?= h($dados['atividade'] ?? '') ?>" placeholder="Ex.: Consulta">
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label" for="servico">Serviço</label>
-                <input type="text" class="form-control" id="servico" name="servico"
-                    value="<?= h($dados['servico'] ?? '') ?>" placeholder="Ex.: Clínica Geral">
-            </div>
-
-            <div class="col-md-12">
-                <label class="form-label" for="diagnostico">Diagnóstico</label>
-                <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3"
-                    placeholder="CID, hipótese diagnóstica..."><?= h($dados['diagnostico'] ?? '') ?></textarea>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label" for="prescricao">Prescrição</label>
-                <textarea class="form-control" id="prescricao" name="prescricao" rows="3"
-                    placeholder="Medicamentos prescritos..."><?= h($dados['prescricao'] ?? '') ?></textarea>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label" for="tratamento">Tratamento</label>
-                <textarea class="form-control" id="tratamento" name="tratamento" rows="3"
-                    placeholder="Procedimentos, terapias..."><?= h($dados['tratamento'] ?? '') ?></textarea>
-            </div>
-
-            <div class="col-md-12">
-                <label class="form-label" for="evolucao">Evolução</label>
-                <textarea class="form-control" id="evolucao" name="evolucao" rows="4"
-                    placeholder="Evolução clínica do paciente..."><?= h($dados['evolucao'] ?? '') ?></textarea>
-            </div>
-
-            <div class="col-md-12">
-                <label class="form-label" for="observacoes">Observações</label>
-                <textarea class="form-control" id="observacoes" name="observacoes" rows="3"
-                    placeholder="Informações adicionais..."><?= h($dados['observacoes'] ?? '') ?></textarea>
-            </div>
+        <div id="atendimentos-container">
+            <?php foreach ($atendimentos as $idx => $at): ?>
+                <?php include __DIR__ . '/partials/atendimento_bloco.php'; ?>
+            <?php endforeach; ?>
         </div>
     </div>
 </div>
@@ -306,6 +291,15 @@ include 'partials/header.php';
 
 </form>
 
+<!-- Template oculto para novos blocos de atendimento -->
+<template id="atendimento-template">
+    <?php
+    $idx = '__INDEX__';
+    $at  = array_fill_keys($camposAtendimento, '');
+    include __DIR__ . '/partials/atendimento_bloco.php';
+    ?>
+</template>
+
 <script>
 // Toggle óbito
 document.getElementById('obito').addEventListener('change', function () {
@@ -313,6 +307,54 @@ document.getElementById('obito').addEventListener('change', function () {
     document.getElementById('bloco_obito').style.display = show ? 'block' : 'none';
     document.getElementById('bloco_causa').style.display = show ? 'block' : 'none';
 });
+
+// Contador para índices únicos dos novos blocos
+let nextAtendimentoIndex = <?= count($atendimentos) ?>;
+
+function atualizarBotoesRemover() {
+    const blocos = document.querySelectorAll('#atendimentos-container .atendimento-bloco');
+    blocos.forEach(function (bloco) {
+        const btn = bloco.querySelector('.btn-remover-atendimento');
+        if (btn) {
+            btn.style.display = blocos.length > 1 ? 'inline-flex' : 'none';
+        }
+    });
+}
+
+function atualizarNumeros() {
+    const blocos = document.querySelectorAll('#atendimentos-container .atendimento-bloco');
+    blocos.forEach(function (bloco, i) {
+        const span = bloco.querySelector('.numero-atendimento');
+        if (span) span.textContent = '#' + (i + 1);
+    });
+}
+
+document.getElementById('btn-adicionar-atendimento').addEventListener('click', function () {
+    const template = document.getElementById('atendimento-template');
+    const html     = template.innerHTML.replaceAll('__INDEX__', nextAtendimentoIndex++);
+    const wrapper  = document.createElement('div');
+    wrapper.innerHTML = html;
+    const bloco = wrapper.firstElementChild;
+    document.getElementById('atendimentos-container').appendChild(bloco);
+
+    bloco.querySelector('.btn-remover-atendimento').addEventListener('click', removerAtendimento);
+
+    atualizarBotoesRemover();
+    atualizarNumeros();
+});
+
+document.querySelectorAll('.btn-remover-atendimento').forEach(function (btn) {
+    btn.addEventListener('click', removerAtendimento);
+});
+
+function removerAtendimento() {
+    this.closest('.atendimento-bloco').remove();
+    atualizarBotoesRemover();
+    atualizarNumeros();
+}
+
+atualizarBotoesRemover();
 </script>
 
 <?php include 'partials/footer.php'; ?>
+
