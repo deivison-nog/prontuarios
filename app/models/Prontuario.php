@@ -102,6 +102,15 @@ class Prontuario
         return $stmt->execute($params);
     }
 
+    public function numeroProntuarioExiste(string $numero, int $excludeId = 0): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM prontuarios WHERE numero_prontuario = ? AND id <> ?'
+        );
+        $stmt->execute([$numero, $excludeId]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function excluir(int $id): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM prontuarios WHERE id = ?');
